@@ -1,33 +1,38 @@
 from itertools import chain
 
 import tensorflow as tf
-import trpo.utils.math_utils as mutils
+from tensorflow.contrib.distributions import kl as kl_divergence
+
 from trpo.utils import tf_utils
 from trpo.optimizers.tensorflow import conjugate_gradients, backtracking_linesearch
 
 
 class TRPO_GAE:
     def __init__(self):
-        self.init_params()
+        # Initialize all variables used in this class
         self.old_policy, self.current_policy = [None] * 2
-        for i in range(self.n_episdoes):
-            self.train_step()
+        self.current_value_function = None
+        self.batch_size_float = None
+        self.args = None
+
+        self.init_params()
 
     @tf_utils.define_scope_and_cache
     def placeholders(self):
         # Todo
         raise NotImplementedError
 
-    def fisher_vector_product(self, vector):
-        # Todo
-        raise NotImplementedError
+    def fit(self, n_episodes, collect_statistics=False):
+        for i in range(n_episodes):
+            sample_data = self.simulate(self.current_policy)  # TODO: Check that sample_data is not changed in the
+            # # subsequent functions during this iteration.
+            gae = self.compute_generalized_advantage_estimate(sample_data)
+            self.update_policy(gae, sample_data)
+            self.update_value_function(sample_data)
 
-    def train_step(self):
-        sample_data = self.simulate(self.current_policy)
-        advantage_estimates = self.compute_advantage_estimates(self.current_value_function)
-        gae = self.compute_generalized_advantage_estimate(advantage_estimates)
-        self.update_policy(gae, sample_data)
-        self.update_value_function()
+    def compute_generalized_advantage_estimate(self, sample_data):
+        # TODO: Currently working on this.
+        raise NotImplementedError
 
     def update_policy(self, gae, sample_data, epsilon=1e-8):
         # Compute loss
@@ -35,9 +40,6 @@ class TRPO_GAE:
         log_likelihood_ratio = self.current_policy.log_likelihood() - self.old_policy.log_likelihood()
         likelihood_ratio = tf.exp(log_likelihood_ratio)
         loss = -tf.reduce_mean(likelihood_ratio * gae)
-
-        # Calculate constraints
-        kl_div = mutils.kl_divergence(self.old_policy, self.current_policy) / self.batch_size_float
 
         policy_gradient = self.current_policy.gradient(loss)  # gradient wrt parameters of policy
         if tf_utils.tf_allclose(policy_gradient, 0):
@@ -56,4 +58,9 @@ class TRPO_GAE:
         self.old_policy = self.current_policy.copy()  # TODO: Do I need to make a copy here?
         self.current_policy.set_parameters(theta_new)  # TODO: maybe change this to instantiating a new policy instead?
 
+    def update_value_function(self, sample_data):
+        self.current_value_function.fit(sample_data)
 
+    def fisher_vector_product(self, vector):
+        # Todo
+        raise NotImplementedError

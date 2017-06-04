@@ -7,7 +7,22 @@ import numpy as np
 import tensorflow as tf
 
 from trpo.utils.python_utils import doublewrap
+
 # from src.py3.utils import as_iter
+
+DEFAULT_DTYPE = tf.float32
+
+
+def tf_discount(x, gamma, name=None):
+    """
+    Compute discounted sum of future values. 
+    y[t] = x[t] + gamma*x[t+1] + gamma^2*x[t+2] + ... + gamma^k x[t+k],
+                where k = len(x) - t - 1
+    """
+    with tf.name_scope(name, 'tf_discount', [x, gamma]):
+        x = tf.convert_to_tensor(x, dtype=x.dtype)
+        gamma = tf.convert_to_tensor(gamma, dtype=DEFAULT_DTYPE)
+        raise NotImplementedError
 
 
 def tf_isclose(a, b, tol=1e-7):
@@ -155,4 +170,3 @@ def define_scope_and_cache(function, scope=None, *args, **kwargs):
         return getattr(self, attribute)
 
     return decorator
-
