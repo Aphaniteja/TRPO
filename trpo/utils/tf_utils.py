@@ -10,7 +10,7 @@ from trpo.utils.python_utils import doublewrap
 
 # from src.py3.utils import as_iter
 
-DEFAULT_DTYPE = tf.float32
+DEFAULT_DTYPE = np.float32  # Tensorflow accepts numpy dtypes for dtypes too!
 
 
 def tf_discount(x, gamma, name=None):

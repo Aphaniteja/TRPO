@@ -1,10 +1,9 @@
-from itertools import chain
-
+import numpy as np
 import tensorflow as tf
-from tensorflow.contrib.distributions import kl as kl_divergence
 
 from trpo.utils import tf_utils
 from trpo.optimizers.tensorflow import conjugate_gradients, backtracking_linesearch
+from trpo.utils.trpo_utils import TRPOSampleMetrics, TRPOEpisodeMetrics
 
 
 class TRPO_GAE:
@@ -23,6 +22,14 @@ class TRPO_GAE:
         raise NotImplementedError
 
     def fit(self, n_episodes, collect_statistics=False):
+        """
+        Train operation for the agent.
+        
+        Similar to scikit-learn's API
+        :param n_episodes: 
+        :param collect_statistics: 
+        :return: 
+        """
         for i in range(n_episodes):
             sample_data = self.simulate(self.current_policy)  # TODO: Check that sample_data is not changed in the
             # # subsequent functions during this iteration.
@@ -30,9 +37,14 @@ class TRPO_GAE:
             self.update_policy(gae, sample_data)
             self.update_value_function(sample_data)
 
+    def _compute_advantage_estimate(self, trajectory):
+        return TRPOSampleMetrics(reward=trajectory.rewards,
+                                 baseline=self.current_value_function.predict(trajectory.observations))
+
     def compute_generalized_advantage_estimate(self, sample_data):
-        # TODO: Currently working on this.
-        raise NotImplementedError
+        # Todo: Parallelize this?
+        return TRPOEpisodeMetrics(samples=(self._compute_advantage_estimate(trajectory)
+                                           for trajectory in sample_data))
 
     def update_policy(self, gae, sample_data, epsilon=1e-8):
         # Compute loss
