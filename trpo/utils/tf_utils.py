@@ -10,6 +10,40 @@ from trpo.utils.python_utils import doublewrap
 # from src.py3.utils import as_iter
 
 
+def tf_isclose(a, b, tol=1e-7):
+    """
+    tensorflow equivalent of np.isclose
+    :param a: 
+    :param b: 
+    :param tol: 
+    :return: 
+    """
+    diff = tf.abs(tf.subtract(a, b))
+    return tf.less_equal(diff, tol)
+
+
+def tf_allclose(a, b, tol=1e-7):
+    """
+    tensorflow equivalent of np.allclose
+    :param a: 
+    :param b: 
+    :param tol: 
+    :return: 
+    """
+    return tf.reduce_all(tf_isclose(a, b, tol))
+
+
+def tf_vector_product(a, b, name=None):
+    """
+    Returns vector product of a and b
+    :param a: 
+    :param b: 
+    :return: 
+    """
+    with tf.name_scope(name, 'tf_vector_product', [a, b]):
+        return tf.reduce_sum(tf.multiply(a, b))
+
+
 def tf_repeat(a, repeats, axis=None, name=None, no_grad=True):
     """
     tensorflow equivalent of numpy repeat
@@ -121,3 +155,4 @@ def define_scope_and_cache(function, scope=None, *args, **kwargs):
         return getattr(self, attribute)
 
     return decorator
+
